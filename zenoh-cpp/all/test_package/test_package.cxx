@@ -1,5 +1,4 @@
 #include <cstdlib>
-#include <iostream>
 #include "zenoh.hxx"
 using namespace zenoh;
 
@@ -7,17 +6,10 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
-    Config config;
 #ifdef ZENOHCXX_ZENOHC
-    if (!config.insert_json(Z_CONFIG_LISTEN_KEY, "[\"tcp/0.0.0.0:7447\"]")) {
-#elif ZENOHCXX_ZENOHPICO
-    if (!config.insert(Z_CONFIG_CONNECT_KEY, "[\"tcp/0.0.0.0:7447\"]")) {
-#else
-#error "Unknown zenoh backend"
+    init_log_from_env_or("error");
 #endif
-        std::cout << "Failed to insert config";
-        return EXIT_FAILURE;
-    }
-
+    Config config = Config::create_default();
+    (void)config;
     return EXIT_SUCCESS;
 }

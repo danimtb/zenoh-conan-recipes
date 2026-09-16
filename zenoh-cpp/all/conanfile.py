@@ -1,10 +1,11 @@
 from conan import ConanFile
 from conan.tools.build import check_min_cppstd
 from conan.tools.cmake import cmake_layout
-from conan.tools.files import apply_conandata_patches, copy, export_conandata_patches, get
+from conan.tools.files import copy, get
 import os
 
-required_conan_version = ">=1.52.0"
+required_conan_version = ">=2.0"
+
 
 class ZenohCppPackageConan(ConanFile):
     name = "zenohcpp"
@@ -21,25 +22,21 @@ class ZenohCppPackageConan(ConanFile):
     no_copy_source = True
 
     options = {
-        "ZENOH_LIB":["zenohc", "zenohpico"],
+        "ZENOH_LIB": ["zenohc", "zenohpico"],
     }
     default_options = {
-        "ZENOH_LIB":"zenohc",
+        "ZENOH_LIB": "zenohc",
     }
 
     @property
     def _min_cppstd(self):
         return 17
-    
+
     @property
     def _cmake_target_name(self):
         if self.options.ZENOH_LIB == "zenohc":
-            return "zenohcxx::zenohc::lib"
-        else:
-            return "zenohcxx::zenohpico"
-
-    def export_sources(self):
-        export_conandata_patches(self)
+            return "zenohcxx::zenohc"
+        return "zenohcxx::zenohpico"
 
     def layout(self):
         cmake_layout(self)
@@ -57,9 +54,6 @@ class ZenohCppPackageConan(ConanFile):
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
 
-    def build(self):
-        apply_conandata_patches(self)
-
     def package(self):
         copy(self, "LICENSE", self.source_folder, os.path.join(self.package_folder, "licenses"))
         copy(
@@ -70,9 +64,12 @@ class ZenohCppPackageConan(ConanFile):
         )
 
     def package_info(self):
-        self.cpp_info.libs = ["zenohcpp"]
         self.cpp_info.bindirs = []
         self.cpp_info.libdirs = []
-        
+
         self.cpp_info.set_property("cmake_file_name", "zenohcpp")
         self.cpp_info.set_property("cmake_target_name", self._cmake_target_name)
+        if self.options.ZENOH_LIB == "zenohc":
+            self.cpp_info.defines.append("ZENOHCXX_ZENOHC")
+        else:
+            self.cpp_info.defines.append("ZENOHCXX_ZENOHPICO")

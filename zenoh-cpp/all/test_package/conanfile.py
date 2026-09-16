@@ -1,12 +1,12 @@
 import os
 from conan import ConanFile
-from conan.tools.cmake import CMake, cmake_layout, CMakeToolchain
+from conan.tools.cmake import CMake, cmake_layout
 from conan.tools.build import can_run
 
 
 class ZenohCppPackageTestConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
-    generators = "CMakeDeps", "VirtualRunEnv"
+    generators = "CMakeDeps", "CMakeToolchain", "VirtualRunEnv"
     test_type = "explicit"
 
     def requirements(self):
@@ -14,12 +14,6 @@ class ZenohCppPackageTestConan(ConanFile):
 
     def layout(self):
         cmake_layout(self)
-    
-    def generate(self):
-        tc = CMakeToolchain(self)
-        zenohcpp = self.dependencies["zenohcpp"]
-        tc.variables["ZENOHCXX_LIB"] = zenohcpp.options.ZENOH_LIB
-        tc.generate()
 
     def build(self):
         cmake = CMake(self)
