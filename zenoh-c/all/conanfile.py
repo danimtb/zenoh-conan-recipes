@@ -1,15 +1,18 @@
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
-from conan.tools.files import apply_conandata_patches, get, copy, export_conandata_patches
-from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout, CMakeDeps
+from conan.tools.env import VirtualBuildEnv
+from conan.tools.files import get, copy, rm
+from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
+from conan.tools.microsoft import VCVars, is_msvc
 import os
 
-required_conan_version = ">=1.53.0"
+required_conan_version = ">=2.0"
+
 
 class ZenohCPackageConan(ConanFile):
     name = "zenohc"
     description = "C-API for Eclipse Zenoh: Zero Overhead Pub/sub, Store/Query and Compute protocol"
-    tags = ["iot", "networking", "robotics", "messaging", "ros2", "edge-computing", "micro-controller"]
+    topics = ("iot", "networking", "robotics", "messaging", "ros2", "edge-computing", "micro-controller")
     license = "EPL-2.0 OR Apache-2.0"
     author = "ZettaScale Zenoh Team <zenoh@zettascale.tech>"
 
@@ -18,23 +21,13 @@ class ZenohCPackageConan(ConanFile):
 
     package_type = "library"
     settings = "os", "compiler", "build_type", "arch"
-
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
-        "ZENOHC_BUILD_WITH_LOGGER_AUTOINIT":[True, False],
-        "ZENOHC_BUILD_WITH_SHARED_MEMORY":[True, False],
-        "ZENOHC_INSTALL_STATIC_LIBRARY":[True, False],
-        "ZENOHC_CARGO_FLAGS": ["ANY"],
     }
-
     default_options = {
         "shared": False,
         "fPIC": True,
-        "ZENOHC_BUILD_WITH_LOGGER_AUTOINIT": True,
-        "ZENOHC_BUILD_WITH_SHARED_MEMORY": True,
-        "ZENOHC_INSTALL_STATIC_LIBRARY":False,
-        "ZENOHC_CARGO_FLAGS": "",
     }
 
     @property
@@ -48,9 +41,6 @@ class ZenohCPackageConan(ConanFile):
             ("Macos", "x86_64"),
             ("Macos", "armv8"),
         ]
-
-    def export_sources(self):
-        export_conandata_patches(self)
 
     def config_options(self):
         if self.settings.os == "Windows":
@@ -70,23 +60,18 @@ class ZenohCPackageConan(ConanFile):
             raise ConanInvalidConfiguration("{}/{} combination is not supported".format(self.settings.os, self.settings.arch))
 
     def build_requirements(self):
-        self.tool_requires("cmake/[>=3.16 <4]")
+        self.tool_requires("rust/1.97.1")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
 
     def generate(self):
-        tc = CMakeToolchain(self)
-        for opt, val in self.options.items():
-            tc.variables[opt] = val
-        tc.variables["ZENOHC_LIB_STATIC"] = str(not self.options.shared)
-    
-        tc.generate()
-        deps = CMakeDeps(self)
-        deps.generate()
+        VirtualBuildEnv(self).generate()
+        if is_msvc(self):
+            VCVars(self).generate()
+        CMakeToolchain(self).generate()
 
     def build(self):
-        apply_conandata_patches(self)
         cmake = CMake(self)
         cmake.configure()
         cmake.build()
@@ -95,13 +80,24 @@ class ZenohCPackageConan(ConanFile):
         copy(self, "LICENSE", self.source_folder, os.path.join(self.package_folder, "licenses"))
         cmake = CMake(self)
         cmake.install()
+        # Upstream install always ships static and shared; keep only the selected linkage.
+        libdir = os.path.join(self.package_folder, "lib")
+        bindir = os.path.join(self.package_folder, "bin")
+        if self.options.shared:
+            rm(self, "libzenohc.a", libdir)
+            rm(self, "libzenohcd.a", libdir)
+            rm(self, "zenohc.lib", libdir)
+            rm(self, "zenohcd.lib", libdir)
+        else:
+            rm(self, "*.dll", bindir)
+            rm(self, "*.dylib", libdir)
+            rm(self, "*.so", libdir)
+            rm(self, "*.so.*", libdir)
+            rm(self, "*.dll.lib", libdir)
+            rm(self, "*.dll.a", libdir)
 
     def package_info(self):
-        if self.settings.build_type == "Debug":
-            self.cpp_info.libs = ["zenohcd"]
-        else:
-            self.cpp_info.libs = ["zenohc"]
-        
+        self.cpp_info.libs = ["zenohc"]
         self.cpp_info.set_property("cmake_file_name", "zenohc")
         self.cpp_info.set_property("cmake_target_name", "zenohc::lib")
         self.cpp_info.set_property("cmake_target_aliases", [f"zenohc::{'shared' if self.options.shared else 'static'}"])
