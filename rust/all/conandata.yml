@@ -1,0 +1,24 @@
+# Official pre-built toolchains from https://static.rust-lang.org/dist/
+# Refresh sha256 values with: python update_hashes.py 1.97.1
+sources:
+  "1.97.1":
+    Linux:
+      x86_64:
+        url: "https://static.rust-lang.org/dist/rust-1.97.1-x86_64-unknown-linux-gnu.tar.gz"
+        sha256: "b4cdbc7cc6b0ee0a2666b1872769fdb2ad8393b28b63952f6493b4b400e4832b"
+    Macos:
+      x86_64:
+        url: "https://static.rust-lang.org/dist/rust-1.97.1-x86_64-apple-darwin.tar.gz"
+        sha256: "5f4c84d2bcce7983468642855a45fc4978fba1324cfdd1ea0b182face3ab4ffa"
+      armv8:
+        url: "https://static.rust-lang.org/dist/rust-1.97.1-aarch64-apple-darwin.tar.gz"
+        sha256: "cbd14c36f039f6f11f38148a6295d8234d18ddf20bea53031c86f119423a8b26"
+    Windows:
+      msvc:
+        x86_64:
+          url: "https://static.rust-lang.org/dist/rust-1.97.1-x86_64-pc-windows-msvc.tar.gz"
+          sha256: "efbb66ddc8ca271424e5bf4de9b5c552c2f6cc68e36309b2c7bbe683c72d0334"
+      gcc:
+        x86_64:
+          url: "https://static.rust-lang.org/dist/rust-1.97.1-x86_64-pc-windows-gnu.tar.gz"
+          sha256: "54709e21a51ae8d2702c123d42d8fcbb5495029f7a0627cec6cea560e7bbb2e5"
