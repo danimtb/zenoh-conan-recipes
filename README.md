@@ -22,9 +22,9 @@ Zenoh-C is a C API, but the library is built with Cargo. The usual approach is â
 Shipping official `rustc`/`cargo` tarballs as `rust/1.97.1` and pulling them with `tool_requires` keeps everything in Conan:
 
 - The Rust version is a package reference, not a host accident. zenoh-c 1.10.1 pulls `rust/1.97.1` to match its `rust-toolchain.toml`.
-- Consumers do not need a preinstalled toolchain. `conan create â€¦ --build=missing` fetches, caches, and reuses the same binaries on every machine.
+- Consumers do not need a preinstalled toolchain. The rust package fetches, caches, and reuses the same binaries on every machine.
 - Windows MSVC vs GNU, Linux, and macOS each resolve the matching official tarball through `package_id` / `conandata.yml`, instead of documenting per-OS rustup commands.
-- The lock is the Conan graph: one profile, one cache, one `--build=missing`. C++ packages that `require` zenohc inherit a reproducible native library without talking to rustup.
+- The lock is the Conan graph: one profile, one cache. C++ packages that `require` zenohc inherit a reproducible native library without talking to rustup.
 
 The trade-off is that Conan owns the toolchain path. That is the point: Rust is treated as a build tool like CMake, not as an implicit environment dependency.
 
@@ -32,19 +32,18 @@ The trade-off is that Conan owns the toolchain path. That is the point: Rust is 
 
 Building the recipes requires Conan. Please visit the official Conan website for installation instructions.
 
-Export the rust recipe first so zenoh-c can resolve `tool_requires("rust/1.97.1")`. Then create zenoh-c (or pass `--build=missing` so rust is built if needed).
+Create the rust package first so zenoh-c can resolve `tool_requires("rust/1.97.1")`.
 
 ```shell
-conan export rust/all --name rust --version 1.97.1
 conan create rust/all --version 1.97.1
-conan create zenoh-c/all --version 1.10.1 --build=missing
-conan create zenoh-pico/all --version 1.10.1 --build=missing
-conan create zenoh-cpp/all --version 1.10.1 --build=missing
+conan create zenoh-c/all --version 1.10.1
+conan create zenoh-cpp/all --version 1.10.1
+
+# zenoh-pico is standalone and does not depend on the packages above
+conan create zenoh-pico/all --version 1.10.1
 ```
 
-If a dependency such as CMake is missing from the cache, add `--build=missing`.
-
-**Windows:** zenoh-c runs Cargo, which compiles and immediately executes `build-script-build.exe` helpers that spawn `rustc`/`cargo`. Windows Defender and other endpoint protection (for example CrowdStrike Falcon) often block that `CreateProcess` with Access Denied (Win32 5). Folder or process exclusions in Defender usually do not help. Build zenoh-c in WSL or on Linux/macOS instead.
+> **Note about Windows:** zenoh-c runs Cargo, which compiles and immediately executes `build-script-build.exe` helpers that spawn `rustc`/`cargo`. Windows Defender and other endpoint protection (for example CrowdStrike Falcon) often block that `CreateProcess` with Access Denied (Win32 5). Folder or process exclusions in Defender usually do not help. Build zenoh-c in WSL or on Linux/macOS instead.
 
 ## Usage
 
