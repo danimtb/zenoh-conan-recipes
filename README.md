@@ -37,10 +37,12 @@ Create the rust package first so zenoh-c can resolve `tool_requires("rust/1.97.1
 ```shell
 conan create rust/all --version 1.97.1
 conan create zenoh-c/all --version 1.10.1
-conan create zenoh-cpp/all --version 1.10.1
 
-# zenoh-pico is standalone and does not depend on the packages above
+# zenoh-pico is standalone and does not depend on rust or zenoh-c
 conan create zenoh-pico/all --version 1.10.1
+
+# uses zenoh-c by default. For zenoh-pico: -o "&:ZENOH_LIB=zenohpico"
+conan create zenoh-cpp/all --version 1.10.1
 ```
 
 > **Note about Windows:** zenoh-c runs Cargo, which compiles and immediately executes `build-script-build.exe` helpers that spawn `rustc`/`cargo`. Windows Defender and other endpoint protection (for example CrowdStrike Falcon) often block that `CreateProcess` with Access Denied (Win32 5). Folder or process exclusions in Defender usually do not help. Build zenoh-c in WSL or on Linux/macOS instead.
